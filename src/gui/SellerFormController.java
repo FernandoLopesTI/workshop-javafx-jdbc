@@ -1,9 +1,11 @@
 package gui;
 
 import java.net.URL;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -104,17 +106,32 @@ public class SellerFormController implements Initializable {
 	}
 
 	private Seller getFormData() {
+		
+		Instant instant = null;
+
 
 		ValidationException exception = new ValidationException("Validation error");
 
 		if (txtName.getText() == null || txtName.getText().trim().equals(""))
 			exception.addError("name", "Field can't be empty");
 
+		if (txtEmail.getText() == null || txtEmail.getText().trim().equals(""))
+			exception.addError("email", "Field can't be empty");
+		
+		if (txtBaseSalary.getText() == null || txtBaseSalary.getText().trim().equals(""))
+			exception.addError("baseSalary", "Field can't be empty");
+
+		if (dpBirthDate.getValue() == null) {
+			exception.addError("birthDate", "Field can't be empty");
+		} else {
+			instant = Instant.from(dpBirthDate.getValue().atStartOfDay(ZoneId.systemDefault()));
+		}
+
 		if (exception.getErrors().size() > 0)
 			throw exception;
 
-		return new Seller(Utils.tryParserToInt(txtId.getText()), txtName.getText(), txtEmail.getText(), null,
-				Double.parseDouble(txtBaseSalary.getText()), null);
+		return new Seller(Utils.tryParserToInt(txtId.getText()), txtName.getText(), txtEmail.getText(),
+				Date.from(instant), Utils.tryParserToDouble(txtBaseSalary.getText()), comboBoxDepartment.getValue());
 	}
 
 	@FXML
@@ -148,7 +165,7 @@ public class SellerFormController implements Initializable {
 		Constraints.setTextFieldMaxLength(txtEmail, 100);
 		Constraints.setTextFieldDouble(txtBaseSalary);
 		Utils.formatDatePicker(dpBirthDate, "dd/MM/yyyy");
-		
+
 		initializeComboBoxDepartment();
 
 	}
@@ -165,7 +182,7 @@ public class SellerFormController implements Initializable {
 		if (entity.getBaseSalary() != null)
 			dpBirthDate.setValue(LocalDate.ofInstant(entity.getBirthDate().toInstant(), ZoneId.systemDefault()));
 
-		if (entity.getDepartment() == null ) {
+		if (entity.getDepartment() == null) {
 			comboBoxDepartment.getSelectionModel().selectFirst();
 		} else {
 			comboBoxDepartment.setValue(entity.getDepartment());
@@ -186,10 +203,10 @@ public class SellerFormController implements Initializable {
 	private void setErrorMessages(Map<String, String> errors) {
 		Set<String> fields = errors.keySet();
 
-		if (fields.contains("name")) {
-			labelErrorName.setText(errors.get("name"));
-
-		}
+		labelErrorName.setText((fields.contains("name")? errors.get("name"):""));
+		labelErrorEmail.setText((fields.contains("email") ? errors.get("email"): ""));
+		labelErrorBaseSalary.setText((fields.contains("baseSalary")? errors.get("baseSalary"):""));
+		labelErrorBirthDate.setText(( fields.contains("birthDate") ? errors.get("birthDate"):""));
 
 	}
 
