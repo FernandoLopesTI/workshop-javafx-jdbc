@@ -37,7 +37,7 @@ import model.services.SellerService;
 public class SellerListController implements Initializable, DataChangeListener {
 
 	private SellerService service;
-	
+
 	private DepartmentService departmentService;
 
 	@FXML
@@ -46,16 +46,16 @@ public class SellerListController implements Initializable, DataChangeListener {
 	private TableColumn<Seller, Integer> tableColumnId;
 	@FXML
 	private TableColumn<Seller, String> tableColumnName;
-	
+
 	@FXML
 	private TableColumn<Seller, String> tableColumnEmail;
-	
+
 	@FXML
 	private TableColumn<Seller, Date> tableColumnBirthDate;
-	
+
 	@FXML
 	private TableColumn<Seller, Double> tableColumnBaseSalary;
-	
+
 	@FXML
 	private TableColumn<Seller, Seller> tableColumnEDIT;
 
@@ -91,16 +91,15 @@ public class SellerListController implements Initializable, DataChangeListener {
 		Utils.formatTableColumnDate(tableColumnBirthDate, "dd/MM/yyyy");
 		tableColumnBaseSalary.setCellValueFactory(new PropertyValueFactory<>("baseSalary"));
 		Utils.formatTableColumnDouble(tableColumnBaseSalary, 2);
-		
+
 		// acompanhar o tableview a altura da janela
 		Stage stage = (Stage) Main.getMainScene().getWindow();
 		tableViewSeller.prefHeightProperty().bind(stage.heightProperty());
 	}
 
 	public void updateTableView() {
-		if (service == null) 
+		if (service == null)
 			throw new IllegalStateException("Service was null!");
-		
 
 		List<Seller> list = service.findAll();
 		obsList = FXCollections.observableArrayList(list);
@@ -111,14 +110,15 @@ public class SellerListController implements Initializable, DataChangeListener {
 
 	}
 
-private void createDialogForm(Seller obj, String absoluteName, Stage parentStage) {
+	private void createDialogForm(Seller obj, String absoluteName, Stage parentStage) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			Pane pane = loader.load();
 
 			SellerFormController controller = loader.getController();
 			controller.setSeller(obj);
-			controller.setSellerServive(new SellerService());
+			controller.setServives(new SellerService(), new DepartmentService());
+			controller.loadAssociatedObjects();
 			controller.subscribeDataChangeListener(this);
 			controller.updateFormData();
 
@@ -131,6 +131,7 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 			dialogStage.showAndWait();
 
 		} catch (IOException e) {
+			e.printStackTrace();
 			Alerts.showAlert("Error loading view", null, e.getMessage(), AlertType.ERROR);
 		}
 
@@ -154,8 +155,7 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 					return;
 				}
 				setGraphic(button);
-				button.setOnAction(
-						event -> createDialogForm(obj, "/gui/SellerForm.fxml", Utils.currentStage(event)));
+				button.setOnAction(event -> createDialogForm(obj, "/gui/SellerForm.fxml", Utils.currentStage(event)));
 			}
 		});
 	}
@@ -180,21 +180,19 @@ private void createDialogForm(Seller obj, String absoluteName, Stage parentStage
 
 	private void removeEntity(Seller obj) {
 		Optional<ButtonType> result = Alerts.showConfirmation("Confirmation", "Are you sure to delete?");
-		
+
 		if (result.get() == ButtonType.OK) {
-			if (service == null) 
+			if (service == null)
 				throw new IllegalStateException("Service was null!");
-			
+
 			try {
 				service.remove(obj);
 				updateTableView();
-				
+
 			} catch (DbIntegrityException e) {
 				Alerts.showAlert("Error removing object", null, e.getMessage(), AlertType.ERROR);
 			}
-			
-			
-			
+
 		}
 	}
 
